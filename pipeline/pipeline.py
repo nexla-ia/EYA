@@ -43,7 +43,7 @@ CIDADES = {
     "Campo Grande":    {"bbox": [-20.6, -54.8, -20.3, -54.5], "pop": 900_000},
     "Cuiabá":          {"bbox": [-15.7, -56.2, -15.4, -55.9], "pop": 620_000},
     "Porto Velho":     {"bbox": [-8.9,  -64.1, -8.6,  -63.8], "pop": 540_000},
-    "Vilhena":         {"bbox": [-12.85, -60.25, -12.60, -60.05], "pop": 100_000},
+    "Vilhena":         {"bbox": [-12.78, -60.17, -12.68, -60.08], "pop": 100_000, "grid": 6},
 }
 
 # Quantos pontos de grid gerar por cidade (resolução do mapa)
@@ -98,13 +98,14 @@ def get_ch4_for_city(cidade: str, config: dict, days_back: int = DAYS_BACK) -> l
     # Mediana temporal — remove outliers de nuvens
     composite = collection.median()
 
-    # Gera grid de pontos de amostragem
-    lat_step = (lat_max - lat_min) / GRID_POINTS
-    lon_step = (lon_max - lon_min) / GRID_POINTS
+    # Gera grid de pontos de amostragem (por cidade ou padrão global)
+    grid = config.get("grid", GRID_POINTS)
+    lat_step = (lat_max - lat_min) / grid
+    lon_step = (lon_max - lon_min) / grid
 
     points = []
-    for i in range(GRID_POINTS):
-        for j in range(GRID_POINTS):
+    for i in range(grid):
+        for j in range(grid):
             lat = lat_min + (i + 0.5) * lat_step
             lon = lon_min + (j + 0.5) * lon_step
             points.append(ee.Feature(ee.Geometry.Point([lon, lat]), {"lat": lat, "lon": lon}))
@@ -181,8 +182,9 @@ def get_no2_for_city(cidade: str, config: dict, days_back: int = DAYS_BACK) -> l
 
     composite = collection.median()
 
-    lat_step = (lat_max - lat_min) / GRID_POINTS
-    lon_step = (lon_max - lon_min) / GRID_POINTS
+    grid = config.get("grid", GRID_POINTS)
+    lat_step = (lat_max - lat_min) / grid
+    lon_step = (lon_max - lon_min) / grid
 
     points = [
         ee.Feature(
@@ -195,8 +197,8 @@ def get_no2_for_city(cidade: str, config: dict, days_back: int = DAYS_BACK) -> l
                 "lon": lon_min + (j + 0.5) * lon_step,
             }
         )
-        for i in range(GRID_POINTS)
-        for j in range(GRID_POINTS)
+        for i in range(grid)
+        for j in range(grid)
     ]
 
     sampled = composite.sampleRegions(
