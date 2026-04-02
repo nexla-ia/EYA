@@ -43,7 +43,7 @@ CIDADES = {
     "Campo Grande":    {"bbox": [-20.6, -54.8, -20.3, -54.5], "pop": 900_000},
     "Cuiabá":          {"bbox": [-15.7, -56.2, -15.4, -55.9], "pop": 620_000},
     "Porto Velho":     {"bbox": [-8.9,  -64.1, -8.6,  -63.8], "pop": 540_000},
-    "Vilhena":         {"bbox": [-12.8, -60.2, -12.6, -60.0], "pop": 100_000},
+    "Vilhena":         {"bbox": [-12.85, -60.25, -12.60, -60.05], "pop": 100_000},
 }
 
 # Quantos pontos de grid gerar por cidade (resolução do mapa)
