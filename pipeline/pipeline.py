@@ -82,12 +82,12 @@ def get_ch4_for_city(cidade: str, config: dict, days_back: int = DAYS_BACK) -> l
     region = ee.Geometry.Rectangle([lon_min, lat_min, lon_max, lat_max])
 
     # Sentinel-5P CH₄ — Offline (5 dias de latência, melhor qualidade)
+    # bias_corrected já vem em ppb diretamente no GEE
     collection = (
         ee.ImageCollection("COPERNICUS/S5P/OFFL/L3_CH4")
-        .select("CH4_column_volume_mixing_ratio_dry_air")
+        .select("CH4_column_volume_mixing_ratio_dry_air_bias_corrected")
         .filterDate(start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
         .filterBounds(region)
-        .filter(ee.Filter.gt("qa_value", 0.5))   # filtro de qualidade
     )
 
     count = collection.size().getInfo()
@@ -125,26 +125,27 @@ def get_ch4_for_city(cidade: str, config: dict, days_back: int = DAYS_BACK) -> l
 
     for feat in features:
         props = feat.get("properties", {})
-        ch4   = props.get("CH4_column_volume_mixing_ratio_dry_air")
-        lat   = props.get("lat")
-        lon   = props.get("lon")
+        ch4_ppb = props.get("CH4_column_volume_mixing_ratio_dry_air_bias_corrected")
+        lat     = props.get("lat")
+        lon     = props.get("lon")
 
-        if ch4 is None or math.isnan(ch4):
+        if ch4_ppb is None or math.isnan(ch4_ppb):
             continue
 
-        # CH₄ em ppb — baseline atmosférico global ~1900 ppb
-        # Anomalia: quanto acima do baseline regional
-        baseline   = 1900.0
-        anomaly    = max(0, ch4 - baseline)
-        no2_equiv  = anomaly * 0.08  # conversão aproximada para compatibilidade com schema
+        # banda bias_corrected já vem em ppb diretamente
 
-        severity = classify_severity_ch4(ch4)
+        # Anomalia: quanto acima do baseline regional (~1900 ppb)
+        baseline  = 1900.0
+        anomaly   = max(0, ch4_ppb - baseline)
+        no2_equiv = anomaly * 0.08  # conversão aproximada para compatibilidade com schema
+
+        severity = classify_severity_ch4(ch4_ppb)
 
         records.append({
             "latitude":    round(lat, 6),
             "longitude":   round(lon, 6),
-            "no2_value":   round(no2_equiv, 4),   # campo no schema original
-            "ch4_value":   round(ch4, 2),          # valor real de CH₄ em ppb
+            "no2_value":   round(no2_equiv, 4),
+            "ch4_value":   round(ch4_ppb, 2),
             "severity":    severity,
             "recorded_at": now_iso,
             "source":      "Sentinel-5P/TROPOMI",
@@ -239,12 +240,12 @@ def get_no2_for_city(cidade: str, config: dict, days_back: int = DAYS_BACK) -> l
 
 def classify_severity_ch4(ch4_ppb: float) -> str:
     """
-    Classifica severidade baseado em anomalia de CH₄.
+    Classifica severidade de CH₄ em ppb.
     Baseline atmosférico global: ~1900 ppb
     """
-    if ch4_ppb < 1910:  return "low"
-    if ch4_ppb < 1930:  return "medium"
-    if ch4_ppb < 1960:  return "high"
+    if ch4_ppb < 1900:  return "low"
+    if ch4_ppb < 1920:  return "medium"
+    if ch4_ppb < 1950:  return "high"
     return "critical"
 
 
