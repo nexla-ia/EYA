@@ -1,0 +1,21 @@
+# Credenciais — nunca subir
+pipeline/.env
+.env
+.env.local
+.env.*.local
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
