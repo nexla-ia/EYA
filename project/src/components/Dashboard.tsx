@@ -109,7 +109,7 @@ export default function Dashboard({ onBack }: DashboardProps) {
         <div className="absolute top-4 left-4 z-10 flex gap-2">
           <button
             onClick={onBack}
-            className="glass flex items-center gap-2 px-4 py-2 font-ui text-xs tracking-widest uppercase border border-[var(--border)] text-[var(--text-2)] hover:text-[var(--teal)] hover:border-[var(--teal)] transition-colors rounded-sm"
+            className="glass flex items-center gap-2 px-4 py-2.5 font-ui text-xs font-medium border border-[var(--border)] text-[var(--text-2)] hover:text-[var(--teal)] hover:border-[var(--teal)] transition-all duration-200 rounded-xl"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Voltar
@@ -117,7 +117,7 @@ export default function Dashboard({ onBack }: DashboardProps) {
 
           <button
             onClick={() => setShowEducational(true)}
-            className="flex items-center gap-2 px-4 py-2 font-ui text-xs tracking-widest uppercase text-[var(--void)] bg-[var(--teal)] hover:bg-[var(--acid)] transition-colors rounded-sm glow-teal"
+            className="flex items-center gap-2 px-4 py-2.5 font-ui text-xs font-semibold text-[var(--void)] bg-[var(--teal)] hover:opacity-90 transition-all duration-200 rounded-xl glow-teal"
           >
             <BookOpen className="w-3.5 h-3.5" />
             Guia Educativo
@@ -140,9 +140,9 @@ export default function Dashboard({ onBack }: DashboardProps) {
         )}
 
         {loading && (
-          <div className="absolute top-4 right-4 glass px-4 py-2 rounded-sm border border-[var(--border)] flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--teal)] animate-glow-pulse" />
-            <span className="font-data text-[10px] text-[var(--teal)] tracking-widest uppercase">Carregando...</span>
+          <div className="absolute top-4 right-4 glass px-4 py-2.5 rounded-xl border border-[var(--border)] flex items-center gap-2.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--teal)] animate-glow-pulse" style={{ color: 'var(--teal)' }} />
+            <span className="font-ui text-xs text-[var(--teal)] font-medium">Carregando dados…</span>
           </div>
         )}
       </div>

@@ -67,7 +67,7 @@ export default function InspectionPanel({ feature, onClose }: InspectionPanelPro
       className="absolute top-4 right-4 w-80 z-10 animate-slide-right"
       style={{ maxHeight: 'calc(100vh - 2rem)' }}
     >
-      <div className="glass rounded-sm border border-[var(--border)] flex flex-col overflow-hidden" style={{ maxHeight: 'calc(100vh - 2rem)' }}>
+      <div className="glass rounded-2xl border border-[var(--border)] flex flex-col overflow-hidden" style={{ maxHeight: 'calc(100vh - 2rem)' }}>
 
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
@@ -173,7 +173,7 @@ export default function InspectionPanel({ feature, onClose }: InspectionPanelPro
         <div className="p-4 border-t border-[var(--border)]">
           <button
             onClick={handleExportPDF}
-            className="w-full flex items-center justify-center gap-2 py-2.5 font-ui font-semibold tracking-widest uppercase text-xs text-[var(--void)] bg-[var(--teal)] hover:bg-[var(--acid)] transition-colors rounded-sm glow-teal"
+            className="w-full flex items-center justify-center gap-2 py-2.5 font-ui font-semibold text-sm text-[var(--void)] bg-[var(--teal)] hover:opacity-90 transition-all duration-200 rounded-xl glow-teal"
           >
             <Download className="w-3.5 h-3.5" />
             Exportar PDF
