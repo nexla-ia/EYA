@@ -32,7 +32,7 @@ export default function LandingPage({ onEnter, onEducational }: LandingPageProps
   const cities = useCountUp(15,   1200, started);
 
   return (
-    <div className="min-h-screen hero-bg text-[var(--text-1)] overflow-x-hidden">
+    <div className="min-h-screen hero-bg text-[var(--text-1)]">
 
       {/* ── Nav ── */}
       <nav className="glass sticky top-0 z-50 border-b border-[var(--border)]">
@@ -71,8 +71,8 @@ export default function LandingPage({ onEnter, onEducational }: LandingPageProps
       </nav>
 
       {/* ── Hero ── */}
-      <section className="relative max-w-7xl mx-auto px-6 pt-16 pb-8 lg:pt-20 lg:pb-12">
-        <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[80vh]">
+      <section className="relative max-w-7xl mx-auto px-6 pt-16 pb-8 lg:pt-20 lg:pb-12" style={{ overflow: 'visible' }}>
+        <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[80vh]" style={{ overflow: 'visible' }}>
 
           {/* Left */}
           <div className="order-2 lg:order-1">
@@ -132,26 +132,15 @@ export default function LandingPage({ onEnter, onEducational }: LandingPageProps
             </div>
           </div>
 
-          {/* Right – globe */}
-          <div className="order-1 lg:order-2 flex flex-col items-center justify-center opacity-0-init animate-fade-in delay-200">
-            <div className="relative">
-              {/* Soft glow rings */}
-              <div
-                className="absolute inset-0 rounded-full pointer-events-none"
-                style={{
-                  background: 'radial-gradient(circle, rgba(0,200,160,0.12) 0%, transparent 65%)',
-                  transform: 'scale(1.15)',
-                }}
-              />
-              <div
-                className="absolute rounded-full border border-[var(--border)] animate-spin-slow pointer-events-none"
-                style={{ inset: -28, borderStyle: 'dashed' }}
-              />
-              <SimpleGlobe size={460} />
+          {/* Right – globe (no clipping, let atmosphere bleed freely) */}
+          <div className="order-1 lg:order-2 flex flex-col items-center justify-center opacity-0-init animate-fade-in delay-200"
+            style={{ overflow: 'visible' }}>
+            <div style={{ overflow: 'visible', position: 'relative' }}>
+              <SimpleGlobe size={520} />
             </div>
 
             {/* Live badge */}
-            <div className="mt-6 flex items-center gap-6 glass px-6 py-3 rounded-xl border border-[var(--border)]">
+            <div className="mt-2 flex items-center gap-6 glass px-6 py-3 rounded-xl border border-[var(--border)]">
               {[
                 { k: 'Satélite', v: 'S5P-OFFL' },
                 { k: 'Resolução', v: '7 × 7 km' },
