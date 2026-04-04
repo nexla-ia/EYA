@@ -1,271 +1,184 @@
-import { X, Download, MapPin, Calendar, Gauge, Flame, Leaf, Users, Droplets } from 'lucide-react';
+import { X, Download, MapPin, Clock, Satellite } from 'lucide-react';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 interface InspectionPanelProps {
-  feature: {
-    type: string;
-    properties: any;
-    coordinates: [number, number];
-  };
+  feature: { type: string; properties: any; coordinates: [number, number] };
   onClose: () => void;
+}
+
+function Row({ label, value, unit, color }: { label: string; value: string | number; unit?: string; color?: string }) {
+  return (
+    <div className="flex items-start justify-between py-2.5 border-b border-[var(--border)] last:border-0">
+      <span className="font-data text-[9px] text-[var(--text-3)] tracking-widest uppercase flex-shrink-0 pt-0.5 w-28">{label}</span>
+      <span className="font-data text-xs text-right" style={{ color: color || 'var(--text-1)' }}>
+        {value}{unit && <span className="text-[var(--text-3)] ml-1 text-[9px]">{unit}</span>}
+      </span>
+    </div>
+  );
+}
+
+function severityStyle(s: string): { color: string; label: string } {
+  switch (s) {
+    case 'low':      return { color: 'var(--teal)',    label: 'BAIXO' };
+    case 'medium':   return { color: 'var(--amber)',   label: 'MÉDIO' };
+    case 'high':     return { color: 'var(--acid)',    label: 'ALTO' };
+    case 'critical': return { color: 'var(--crimson)', label: 'CRÍTICO' };
+    default:         return { color: 'var(--text-2)',  label: s.toUpperCase() };
+  }
+}
+
+function formatDate(d: string) {
+  return new Date(d).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 }
 
 export default function InspectionPanel({ feature, onClose }: InspectionPanelProps) {
   const { type, properties, coordinates } = feature;
-
-  function getSeverityColor(severity: string): string {
-    switch (severity) {
-      case 'low':
-        return 'bg-emerald-500';
-      case 'medium':
-        return 'bg-yellow-500';
-      case 'high':
-        return 'bg-orange-500';
-      case 'critical':
-        return 'bg-red-600';
-      default:
-        return 'bg-slate-500';
-    }
-  }
-
-  function formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleString('pt-BR');
-  }
+  const isAir  = type === 'air-pollution';
+  const isSoil = type === 'soil-pollution';
+  const sev    = severityStyle(properties.severity || '');
 
   async function handleExportPDF() {
     const pdf = new jsPDF();
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const margin = 20;
-    let yPosition = margin;
-
-    pdf.setFontSize(20);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('EYA - Relatório de Inspeção', margin, yPosition);
-    yPosition += 15;
-
-    pdf.setFontSize(10);
-    pdf.setFont('helvetica', 'normal');
-    pdf.setTextColor(100);
-    pdf.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, margin, yPosition);
-    yPosition += 15;
-
-    pdf.setFontSize(14);
-    pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(0);
-
-    if (type === 'air-pollution') {
-      pdf.text('Emissão de Metano (CH₄)', margin, yPosition);
-      yPosition += 10;
-
-      pdf.setFontSize(11);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(`Concentração CH₄: ${properties.value.toFixed(2)} ppb`, margin, yPosition);
-      yPosition += 8;
-      pdf.text(`Gravidade: ${properties.severity}`, margin, yPosition);
-      yPosition += 8;
-    } else if (type === 'soil-pollution') {
-      pdf.text('Detecção de Resíduos Urbanos', margin, yPosition);
-      yPosition += 10;
-
-      pdf.setFontSize(11);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(`Score de Risco Ambiental: ${properties.risk_score?.toFixed(2) || properties.score.toFixed(2)}`, margin, yPosition);
-      yPosition += 8;
-      pdf.text(`Categoria: ${properties.category}`, margin, yPosition);
-      yPosition += 8;
-      pdf.text(`Gravidade: ${properties.severity}`, margin, yPosition);
-      yPosition += 8;
-      pdf.text(`Emissão CH₄: ${properties.ch4_value?.toFixed(2) || 'N/A'} ppb`, margin, yPosition);
-      yPosition += 8;
-      pdf.text(`NDVI: ${properties.ndvi_value?.toFixed(3) || 'N/A'}`, margin, yPosition);
-      yPosition += 8;
-      pdf.text(`Densidade Pop.: ${properties.population_density || 'N/A'} hab/km²`, margin, yPosition);
-      yPosition += 8;
-      pdf.text(`Intensidade de Poluição: ${properties.pollution_intensity || 'N/A'}`, margin, yPosition);
-      yPosition += 8;
+    const m = 20; let y = m;
+    pdf.setFontSize(18); pdf.setFont('helvetica', 'bold');
+    pdf.text('EYA — Relatório de Inspeção', m, y); y += 12;
+    pdf.setFontSize(9); pdf.setFont('helvetica', 'normal'); pdf.setTextColor(120);
+    pdf.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, m, y); y += 10;
+    pdf.setTextColor(0); pdf.setFontSize(12); pdf.setFont('helvetica', 'bold');
+    pdf.text(isAir ? 'Emissão Atmosférica (CH₄/NO₂)' : 'Risco de Solo / Metano', m, y); y += 9;
+    pdf.setFontSize(10); pdf.setFont('helvetica', 'normal');
+    if (isAir) {
+      pdf.text(`Valor: ${properties.value?.toFixed(2)} ppb`, m, y); y += 7;
+    } else {
+      pdf.text(`Score de risco: ${(properties.risk_score ?? properties.score)?.toFixed(2)}`, m, y); y += 7;
+      pdf.text(`CH₄: ${properties.ch4_value?.toFixed(2) ?? 'N/A'} ppb`, m, y); y += 7;
+      pdf.text(`NDVI: ${properties.ndvi_value?.toFixed(3) ?? 'N/A'}`, m, y); y += 7;
+      pdf.text(`Pop. Density: ${properties.population_density ?? 'N/A'} hab/km²`, m, y); y += 7;
     }
-
-    pdf.text(`Fonte: ${properties.source}`, margin, yPosition);
-    yPosition += 8;
-    pdf.text(`Data/Hora: ${formatDate(properties.recorded_at)}`, margin, yPosition);
-    yPosition += 8;
-    pdf.text(`Coordenadas: ${coordinates[1].toFixed(6)}, ${coordinates[0].toFixed(6)}`, margin, yPosition);
-    yPosition += 15;
-
-    try {
-      const mapElement = document.querySelector('.maplibregl-canvas') as HTMLCanvasElement;
-      if (mapElement) {
-        const canvas = await html2canvas(mapElement, {
-          useCORS: true,
-          allowTaint: true,
-        });
-
-        const imgData = canvas.toDataURL('image/png');
-        const imgWidth = pageWidth - 2 * margin;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-        if (yPosition + imgHeight > pdf.internal.pageSize.getHeight() - margin) {
-          pdf.addPage();
-          yPosition = margin;
-        }
-
-        pdf.text('Visualização do Mapa:', margin, yPosition);
-        yPosition += 10;
-        pdf.addImage(imgData, 'PNG', margin, yPosition, imgWidth, imgHeight);
-      }
-    } catch (error) {
-      console.error('Error capturing map:', error);
-    }
-
-    pdf.save(`eya-relatorio-${Date.now()}.pdf`);
+    pdf.text(`Gravidade: ${properties.severity}`, m, y); y += 7;
+    pdf.text(`Fonte: ${properties.source}`, m, y); y += 7;
+    pdf.text(`Data: ${formatDate(properties.recorded_at)}`, m, y); y += 7;
+    pdf.text(`Coords: ${coordinates[1].toFixed(6)}, ${coordinates[0].toFixed(6)}`, m, y);
+    pdf.save(`eya-inspecao-${Date.now()}.pdf`);
   }
 
   return (
-    <div className="absolute top-4 left-4 w-96 bg-slate-800 rounded-lg shadow-2xl border border-slate-700 text-white z-10">
-      <div className="flex items-center justify-between p-4 border-b border-slate-700">
-        <h3 className="font-semibold text-lg">Inspeção de Dados</h3>
-        <button
-          onClick={onClose}
-          className="p-1 hover:bg-slate-700 rounded transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
+    <div
+      className="absolute top-4 right-4 w-80 z-10 animate-slide-right"
+      style={{ maxHeight: 'calc(100vh - 2rem)' }}
+    >
+      <div className="glass rounded-sm border border-[var(--border)] flex flex-col overflow-hidden" style={{ maxHeight: 'calc(100vh - 2rem)' }}>
 
-      <div className="p-4 space-y-4">
-        {type === 'air-pollution' && (
-          <>
-            <div className="p-3 bg-slate-700/50 rounded-lg">
-              <div className="text-sm text-slate-400 mb-1">Tipo</div>
-              <div className="font-medium">Emissão de Metano (CH₄)</div>
-            </div>
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
+          <div className="flex items-center gap-2">
+            <Satellite className="w-3.5 h-3.5 text-[var(--teal)]" />
+            <span className="font-data text-[9px] text-[var(--teal)] tracking-widest uppercase">
+              {isAir ? '// emissão atmosférica' : '// risco de solo'}
+            </span>
+          </div>
+          <button onClick={onClose} className="text-[var(--text-3)] hover:text-[var(--text-1)] transition-colors">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
 
-            <div className="p-3 bg-slate-700/50 rounded-lg">
-              <div className="text-sm text-slate-400 mb-1">Concentração CH₄</div>
-              <div className="text-2xl font-bold">{properties.value.toFixed(2)} ppb</div>
-              <div className="text-xs text-slate-500 mt-1">partes por bilhão</div>
-            </div>
-
-            <div className="p-3 bg-slate-700/50 rounded-lg">
-              <div className="text-sm text-slate-400 mb-1">Gravidade</div>
-              <div className="flex items-center gap-2">
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getSeverityColor(properties.severity)}`}>
-                  {properties.severity}
+        {/* Severity hero */}
+        <div className="px-4 py-4 border-b border-[var(--border)]" style={{ background: `rgba(${sev.color === 'var(--teal)' ? '0,232,208' : sev.color === 'var(--amber)' ? '255,178,36' : sev.color === 'var(--acid)' ? '184,255,87' : '255,61,90'},0.05)` }}>
+          <div className="flex items-end justify-between">
+            <div>
+              <div className="font-data text-[9px] text-[var(--text-3)] tracking-widest uppercase mb-1">
+                {isAir ? 'Concentração' : 'Risk Score'}
+              </div>
+              <div className="font-data text-3xl font-semibold leading-none" style={{ color: sev.color }}>
+                {isAir
+                  ? `${properties.value?.toFixed(1) ?? '—'}`
+                  : `${(properties.risk_score ?? properties.score)?.toFixed(1) ?? '—'}`}
+                <span className="text-sm font-normal text-[var(--text-3)] ml-1">
+                  {isAir ? 'ppb' : '/10'}
                 </span>
               </div>
             </div>
-          </>
-        )}
-
-        {type === 'soil-pollution' && (
-          <>
-            <div className="p-3 bg-slate-700/50 rounded-lg">
-              <div className="text-sm text-slate-400 mb-1">Tipo</div>
-              <div className="font-medium">Detecção de Resíduos Urbanos</div>
+            <div
+              className="px-3 py-1 rounded-sm font-data text-[10px] tracking-widest"
+              style={{
+                color: sev.color,
+                border: `1px solid ${sev.color}`,
+                background: `rgba(${sev.color === 'var(--teal)' ? '0,232,208' : sev.color === 'var(--amber)' ? '255,178,36' : sev.color === 'var(--acid)' ? '184,255,87' : '255,61,90'},0.1)`,
+              }}
+            >
+              {sev.label}
             </div>
-
-            <div className="p-3 bg-slate-700/50 rounded-lg">
-              <div className="text-sm text-slate-400 mb-1">Score de Risco Ambiental</div>
-              <div className="flex items-center gap-2">
-                <Gauge className="w-5 h-5" />
-                <div className="text-2xl font-bold">{properties.risk_score?.toFixed(2) || properties.score.toFixed(2)}</div>
-              </div>
-            </div>
-
-            <div className="p-3 bg-slate-700/50 rounded-lg">
-              <div className="text-sm text-slate-400 mb-1">Categoria</div>
-              <div className="font-medium">{properties.category}</div>
-            </div>
-
-            <div className="p-3 bg-slate-700/50 rounded-lg">
-              <div className="text-sm text-slate-400 mb-1">Gravidade</div>
-              <div className="flex items-center gap-2">
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getSeverityColor(properties.severity)}`}>
-                  {properties.severity}
-                </span>
-              </div>
-            </div>
-
-            <div className="p-3 bg-slate-700/50 rounded-lg">
-              <div className="flex items-center gap-2 text-sm text-slate-400 mb-1">
-                <Flame className="w-4 h-4" />
-                Emissão de Metano (CH₄)
-              </div>
-              <div className="text-xl font-bold">{properties.ch4_value?.toFixed(2) || 'N/A'} <span className="text-sm font-normal">ppb</span></div>
-            </div>
-
-            <div className="p-3 bg-slate-700/50 rounded-lg">
-              <div className="flex items-center gap-2 text-sm text-slate-400 mb-1">
-                <Users className="w-4 h-4" />
-                Densidade Populacional
-              </div>
-              <div className="text-xl font-bold">{properties.population_density || 'N/A'} <span className="text-sm font-normal">hab/km²</span></div>
-              <div className="text-xs text-slate-500 mt-1">
-                População potencialmente afetada
-              </div>
-            </div>
-
-            <div className="p-3 bg-slate-700/50 rounded-lg">
-              <div className="flex items-center gap-2 text-sm text-slate-400 mb-1">
-                <Droplets className="w-4 h-4" />
-                Intensidade de Poluição do Solo
-              </div>
-              <div className="text-xl font-bold">{properties.pollution_intensity || 'N/A'}</div>
-              <div className="text-xs text-slate-500 mt-1">
-                {properties.pollution_intensity === 'Alta' ? 'Solo severamente contaminado' :
-                 properties.pollution_intensity === 'Média' ? 'Solo moderadamente contaminado' :
-                 'Solo levemente contaminado'}
-              </div>
-            </div>
-
-            <div className="p-3 bg-slate-700/50 rounded-lg">
-              <div className="flex items-center gap-2 text-sm text-slate-400 mb-1">
-                <Leaf className="w-4 h-4" />
-                NDVI (Vegetação)
-              </div>
-              <div className="text-xl font-bold">{properties.ndvi_value?.toFixed(3) || 'N/A'}</div>
-              <div className="text-xs text-slate-500 mt-1">
-                {properties.ndvi_value && properties.ndvi_value < 0.2 ? 'Solo degradado' :
-                 properties.ndvi_value && properties.ndvi_value < 0.4 ? 'Vegetação esparsa' :
-                 'Vegetação saudável'}
-              </div>
-            </div>
-          </>
-        )}
-
-
-        <div className="p-3 bg-slate-700/50 rounded-lg">
-          <div className="text-sm text-slate-400 mb-1">Fonte</div>
-          <div className="font-medium text-sm">{properties.source}</div>
-        </div>
-
-        <div className="p-3 bg-slate-700/50 rounded-lg">
-          <div className="flex items-center gap-2 text-sm text-slate-400 mb-1">
-            <Calendar className="w-4 h-4" />
-            Data/Hora
-          </div>
-          <div className="font-medium text-sm">{formatDate(properties.recorded_at)}</div>
-        </div>
-
-        <div className="p-3 bg-slate-700/50 rounded-lg">
-          <div className="flex items-center gap-2 text-sm text-slate-400 mb-1">
-            <MapPin className="w-4 h-4" />
-            Coordenadas
-          </div>
-          <div className="font-mono text-sm">
-            {coordinates[1].toFixed(6)}, {coordinates[0].toFixed(6)}
           </div>
         </div>
 
-        <button
-          onClick={handleExportPDF}
-          className="w-full px-4 py-3 bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors flex items-center justify-center gap-2 font-medium"
-        >
-          <Download className="w-5 h-5" />
-          Exportar PDF
-        </button>
+        {/* Data rows */}
+        <div className="flex-1 overflow-y-auto px-4">
+          <div className="py-1">
+            {isAir && (
+              <Row label="Fonte" value={properties.source ?? '—'} />
+            )}
+
+            {isSoil && (
+              <>
+                <Row label="Categoria" value={properties.category ?? '—'} />
+                <Row
+                  label="CH₄"
+                  value={properties.ch4_value?.toFixed(2) ?? '—'}
+                  unit="ppb"
+                  color="var(--amber)"
+                />
+                <Row
+                  label="NDVI"
+                  value={properties.ndvi_value?.toFixed(3) ?? '—'}
+                  color={properties.ndvi_value < 0.2 ? 'var(--crimson)' : properties.ndvi_value < 0.4 ? 'var(--amber)' : 'var(--teal)'}
+                />
+                <Row
+                  label="Pop. Afetada"
+                  value={properties.population_density ?? '—'}
+                  unit="hab/km²"
+                />
+                <Row
+                  label="Intensidade"
+                  value={properties.pollution_intensity ?? '—'}
+                  color={
+                    properties.pollution_intensity === 'Alta' ? 'var(--crimson)' :
+                    properties.pollution_intensity === 'Média' ? 'var(--amber)' : 'var(--teal)'
+                  }
+                />
+                <Row label="Fonte" value={properties.source ?? '—'} />
+              </>
+            )}
+
+            <div className="flex items-start justify-between py-2.5 border-b border-[var(--border)]">
+              <span className="font-data text-[9px] text-[var(--text-3)] tracking-widest uppercase flex-shrink-0 pt-0.5 w-28 flex items-center gap-1">
+                <Clock className="w-2.5 h-2.5" />data
+              </span>
+              <span className="font-data text-xs text-[var(--text-1)] text-right">
+                {formatDate(properties.recorded_at)}
+              </span>
+            </div>
+
+            <div className="flex items-start justify-between py-2.5">
+              <span className="font-data text-[9px] text-[var(--text-3)] tracking-widest uppercase flex-shrink-0 pt-0.5 w-28 flex items-center gap-1">
+                <MapPin className="w-2.5 h-2.5" />coords
+              </span>
+              <span className="font-data text-[10px] text-[var(--text-2)] text-right leading-relaxed">
+                {coordinates[1].toFixed(5)}<br />{coordinates[0].toFixed(5)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Export */}
+        <div className="p-4 border-t border-[var(--border)]">
+          <button
+            onClick={handleExportPDF}
+            className="w-full flex items-center justify-center gap-2 py-2.5 font-ui font-semibold tracking-widest uppercase text-xs text-[var(--void)] bg-[var(--teal)] hover:bg-[var(--acid)] transition-colors rounded-sm glow-teal"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Exportar PDF
+          </button>
+        </div>
       </div>
     </div>
   );

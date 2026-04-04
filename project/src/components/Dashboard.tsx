@@ -89,7 +89,7 @@ export default function Dashboard({ onBack }: DashboardProps) {
   }
 
   return (
-    <div className="h-screen flex overflow-hidden bg-slate-900">
+    <div className="h-screen flex overflow-hidden" style={{ background: 'var(--void)' }}>
       <Sidebar
         activeLayers={activeLayers}
         onLayerToggle={(layer) =>
@@ -109,17 +109,17 @@ export default function Dashboard({ onBack }: DashboardProps) {
         <div className="absolute top-4 left-4 z-10 flex gap-2">
           <button
             onClick={onBack}
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg shadow-lg border border-slate-700 flex items-center gap-2 transition-colors"
+            className="glass flex items-center gap-2 px-4 py-2 font-ui text-xs tracking-widest uppercase border border-[var(--border)] text-[var(--text-2)] hover:text-[var(--teal)] hover:border-[var(--teal)] transition-colors rounded-sm"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-3.5 h-3.5" />
             Voltar
           </button>
 
           <button
             onClick={() => setShowEducational(true)}
-            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-lg shadow-lg flex items-center gap-2 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 font-ui text-xs tracking-widest uppercase text-[var(--void)] bg-[var(--teal)] hover:bg-[var(--acid)] transition-colors rounded-sm glow-teal"
           >
-            <BookOpen className="w-4 h-4" />
+            <BookOpen className="w-3.5 h-3.5" />
             Guia Educativo
           </button>
         </div>
@@ -140,8 +140,9 @@ export default function Dashboard({ onBack }: DashboardProps) {
         )}
 
         {loading && (
-          <div className="absolute top-4 right-4 bg-slate-800 text-white px-4 py-2 rounded-lg shadow-lg border border-slate-700">
-            Carregando dados...
+          <div className="absolute top-4 right-4 glass px-4 py-2 rounded-sm border border-[var(--border)] flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--teal)] animate-glow-pulse" />
+            <span className="font-data text-[10px] text-[var(--teal)] tracking-widest uppercase">Carregando...</span>
           </div>
         )}
       </div>

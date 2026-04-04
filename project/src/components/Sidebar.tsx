@@ -1,312 +1,236 @@
 import { useState } from 'react';
-import {
-  Layers,
-  Filter,
-  Globe,
-  Calendar,
-  Search,
-  BookOpen,
-  MapPin,
-} from 'lucide-react';
+import { Layers, SlidersHorizontal, MapPin, BookOpen, RefreshCw, ChevronDown } from 'lucide-react';
 
 interface SidebarProps {
-  activeLayers: {
-    airPollution: boolean;
-    soilPollution: boolean;
-    populationDensity: boolean;
-  };
+  activeLayers: { airPollution: boolean; soilPollution: boolean; populationDensity: boolean };
   onLayerToggle: (layer: string) => void;
-  filters: {
-    severity: string;
-    category: string;
-    dateRange: number;
-  };
+  filters: { severity: string; category: string; dateRange: number };
   onFilterChange: (filters: any) => void;
   onRefresh: () => void;
-  dataCount: {
-    airPollution: number;
-    soilPollution: number;
-  };
+  dataCount: { airPollution: number; soilPollution: number };
   onShowEducational: () => void;
 }
 
-export default function Sidebar({
-  activeLayers,
-  onLayerToggle,
-  filters,
-  onFilterChange,
-  onRefresh,
-  dataCount,
-  onShowEducational,
-}: SidebarProps) {
-  const [showEducational, setShowEducational] = useState(false);
-  const [searchCity, setSearchCity] = useState('');
-  const [searchState, setSearchState] = useState('');
+function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
+  return (
+    <label className="toggle-wrap">
+      <input type="checkbox" className="toggle-input" checked={checked} onChange={onChange} />
+      <div className="toggle-track">
+        <div className="toggle-thumb" />
+      </div>
+    </label>
+  );
+}
 
-  const brazilianCities = [
-    'São Paulo', 'Rio de Janeiro', 'Brasília', 'Salvador', 'Belo Horizonte',
-    'Manaus', 'Curitiba', 'Recife', 'Porto Alegre', 'Fortaleza',
-    'Goiânia', 'Belém', 'Guarulhos', 'Campinas', 'São Luís'
+function Section({ icon, label, children, defaultOpen = true }: {
+  icon: React.ReactNode; label: string; children: React.ReactNode; defaultOpen?: boolean
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border-b border-[var(--border)]">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between px-5 py-3 hover:bg-[rgba(0,232,208,0.03)] transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-[var(--teal)]">{icon}</span>
+          <span className="font-data text-[10px] tracking-widest uppercase text-[var(--text-3)]">{label}</span>
+        </div>
+        <ChevronDown
+          className="w-3 h-3 text-[var(--text-3)] transition-transform"
+          style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
+        />
+      </button>
+      {open && <div className="px-5 pb-4">{children}</div>}
+    </div>
+  );
+}
+
+export default function Sidebar({
+  activeLayers, onLayerToggle, filters, onFilterChange,
+  onRefresh, dataCount, onShowEducational
+}: SidebarProps) {
+  const [searchCity, setSearchCity] = useState('');
+
+  const cities = [
+    'São Paulo','Rio de Janeiro','Belo Horizonte','Manaus','Salvador',
+    'Curitiba','Recife','Fortaleza','Belém','Porto Alegre',
+    'Goiânia','Campo Grande','Cuiabá','Porto Velho','Vilhena',
   ];
 
-  const brazilianStates = [
-    'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
-    'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
-    'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+  const severityColor: Record<string, string> = {
+    all: 'var(--text-2)', low: 'var(--teal)', medium: 'var(--amber)',
+    high: 'var(--acid)', critical: 'var(--crimson)',
+  };
+
+  const layers = [
+    {
+      key: 'airPollution',
+      label: 'Emissões CH₄ / NO₂',
+      sub: 'Sentinel-5P TROPOMI',
+      count: dataCount.airPollution,
+      active: activeLayers.airPollution,
+      color: 'var(--teal)',
+    },
+    {
+      key: 'soilPollution',
+      label: 'Risco de Resíduos',
+      sub: 'Solo / Metano elevado',
+      count: dataCount.soilPollution,
+      active: activeLayers.soilPollution,
+      color: 'var(--acid)',
+    },
+    {
+      key: 'populationDensity',
+      label: 'Densidade Populacional',
+      sub: 'IBGE — hab/km²',
+      count: null,
+      active: activeLayers.populationDensity,
+      color: 'var(--violet)',
+    },
   ];
 
   return (
-    <div className="w-96 bg-slate-800 text-white flex flex-col h-full overflow-hidden border-r border-slate-700">
-      <div className="p-6 border-b border-slate-700">
-        <div className="flex items-center gap-3 mb-2">
-          <Globe className="w-8 h-8 text-emerald-400" />
-          <div>
-            <h1 className="text-2xl font-bold">EYA</h1>
-            <p className="text-xs text-slate-400">Earth + IA Platform</p>
+    <div
+      className="w-72 flex flex-col h-full overflow-hidden border-r border-[var(--border)]"
+      style={{ background: 'var(--deep)' }}
+    >
+      {/* Header */}
+      <div className="px-5 py-5 border-b border-[var(--border)] flex items-center justify-between">
+        <div>
+          <div className="font-display text-xl font-bold text-[var(--teal)] tracking-widest leading-none">EYA</div>
+          <div className="font-data text-[9px] text-[var(--text-3)] tracking-widest uppercase mt-0.5">
+            Earth + IA Platform
           </div>
         </div>
+        <button
+          onClick={onRefresh}
+          className="p-2 rounded-sm border border-[var(--border)] text-[var(--text-3)] hover:text-[var(--teal)] hover:border-[var(--teal)] transition-colors"
+          title="Atualizar dados"
+        >
+          <RefreshCw className="w-3.5 h-3.5" />
+        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        <div className="p-6 space-y-6">
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Layers className="w-5 h-5 text-emerald-400" />
-              <h2 className="text-lg font-semibold">Camadas</h2>
+
+        {/* Layers */}
+        <Section icon={<Layers className="w-3.5 h-3.5" />} label="Camadas">
+          <div className="space-y-2 mt-1">
+            {layers.map(({ key, label, sub, count, active, color }) => (
+              <div
+                key={key}
+                className="flex items-center justify-between p-3 rounded-sm border transition-all cursor-pointer group"
+                style={{
+                  background: active ? `rgba(${color === 'var(--teal)' ? '0,232,208' : color === 'var(--acid)' ? '184,255,87' : '168,85,247'},0.04)` : 'transparent',
+                  borderColor: active ? color : 'var(--border)',
+                }}
+                onClick={() => onLayerToggle(key)}
+              >
+                <div className="flex-1 min-w-0 mr-3">
+                  <div className="font-ui text-sm font-medium text-[var(--text-1)] leading-tight">{label}</div>
+                  <div className="font-data text-[9px] text-[var(--text-3)] tracking-wide mt-0.5 uppercase">{sub}</div>
+                  {count !== null && (
+                    <div className="font-data text-[10px] mt-1" style={{ color: active ? color : 'var(--text-3)' }}>
+                      {count.toLocaleString('pt-BR')} pts
+                    </div>
+                  )}
+                </div>
+                <Toggle checked={active} onChange={() => onLayerToggle(key)} />
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        {/* Filters */}
+        <Section icon={<SlidersHorizontal className="w-3.5 h-3.5" />} label="Filtros">
+          <div className="space-y-4 mt-1">
+
+            {/* Severity */}
+            <div>
+              <label className="font-data text-[9px] text-[var(--text-3)] tracking-widest uppercase block mb-1.5">
+                Gravidade
+              </label>
+              <div className="grid grid-cols-5 gap-1">
+                {['all','low','medium','high','critical'].map(s => (
+                  <button
+                    key={s}
+                    onClick={() => onFilterChange({ severity: s })}
+                    className="py-1.5 text-center rounded-sm border text-[9px] font-data tracking-wide uppercase transition-all"
+                    style={{
+                      borderColor: filters.severity === s ? severityColor[s] : 'var(--border)',
+                      color: filters.severity === s ? severityColor[s] : 'var(--text-3)',
+                      background: filters.severity === s ? `rgba(${s === 'all' ? '111,184,204' : s === 'low' ? '0,232,208' : s === 'medium' ? '255,178,36' : s === 'high' ? '184,255,87' : '255,61,90'},0.08)` : 'transparent',
+                    }}
+                  >
+                    {s === 'all' ? 'all' : s === 'low' ? 'low' : s === 'medium' ? 'med' : s === 'high' ? 'hi' : 'crit'}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="flex items-center gap-3 p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 cursor-pointer transition-colors">
-                <input
-                  type="checkbox"
-                  checked={activeLayers.airPollution}
-                  onChange={() => onLayerToggle('airPollution')}
-                  className="w-4 h-4 rounded accent-emerald-500"
-                />
-                <div className="flex-1">
-                  <div className="font-medium">Emissões de Metano (CH₄)</div>
-                  <div className="text-xs text-slate-400">
-                    {dataCount.airPollution} pontos detectados
-                  </div>
-                </div>
+            {/* Category */}
+            <div>
+              <label className="font-data text-[9px] text-[var(--text-3)] tracking-widest uppercase block mb-1.5">
+                Categoria (Solo)
               </label>
+              <select value={filters.category} onChange={e => onFilterChange({ category: e.target.value })}>
+                <option value="all">Todas</option>
+                <option value="methane_emission">Emissão de Metano</option>
+                <option value="Resíduos Urbanos">Resíduos Urbanos</option>
+                <option value="Aterro">Aterro</option>
+              </select>
+            </div>
 
-              <label className="flex items-center gap-3 p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 cursor-pointer transition-colors">
-                <input
-                  type="checkbox"
-                  checked={activeLayers.soilPollution}
-                  onChange={() => onLayerToggle('soilPollution')}
-                  className="w-4 h-4 rounded accent-emerald-500"
-                />
-                <div className="flex-1">
-                  <div className="font-medium">Resíduos Urbanos</div>
-                  <div className="text-xs text-slate-400">
-                    {dataCount.soilPollution} áreas detectadas
-                  </div>
-                </div>
+            {/* Date range */}
+            <div>
+              <label className="font-data text-[9px] text-[var(--text-3)] tracking-widest uppercase block mb-3">
+                Janela temporal
               </label>
-
-              <label className="flex items-center gap-3 p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 cursor-pointer transition-colors">
-                <input
-                  type="checkbox"
-                  checked={activeLayers.populationDensity}
-                  onChange={() => onLayerToggle('populationDensity')}
-                  className="w-4 h-4 rounded accent-emerald-500"
-                />
-                <div className="flex-1">
-                  <div className="font-medium">Densidade Populacional</div>
-                  <div className="text-xs text-slate-400">
-                    Mapa de calor populacional
-                  </div>
-                </div>
-              </label>
-
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-data text-[10px] text-[var(--text-3)]">1d</span>
+                <span className="led text-sm">{filters.dateRange}d</span>
+                <span className="font-data text-[10px] text-[var(--text-3)]">90d</span>
+              </div>
+              <input
+                type="range" min="1" max="90"
+                value={filters.dateRange}
+                onChange={e => onFilterChange({ dateRange: parseInt(e.target.value) })}
+              />
             </div>
           </div>
+        </Section>
 
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Filter className="w-5 h-5 text-cyan-400" />
-              <h2 className="text-lg font-semibold">Filtros</h2>
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                <label className="block text-sm font-medium mb-1 text-slate-300">
-                  Gravidade
-                </label>
-                <select
-                  value={filters.severity}
-                  onChange={(e) => onFilterChange({ severity: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-700 rounded-lg border border-slate-600 focus:border-cyan-500 focus:outline-none"
-                >
-                  <option value="all">Todas</option>
-                  <option value="low">Baixa</option>
-                  <option value="medium">Média</option>
-                  <option value="high">Alta</option>
-                  <option value="critical">Crítica</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1 text-slate-300">
-                  Categoria (Solo)
-                </label>
-                <select
-                  value={filters.category}
-                  onChange={(e) => onFilterChange({ category: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-700 rounded-lg border border-slate-600 focus:border-cyan-500 focus:outline-none"
-                >
-                  <option value="all">Todas</option>
-                  <option value="Resíduos Urbanos">Resíduos Urbanos</option>
-                  <option value="Lixo Industrial">Lixo Industrial</option>
-                  <option value="Deposição Irregular">Deposição Irregular</option>
-                  <option value="Aterro">Aterro</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1 text-slate-300 flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Últimos {filters.dateRange} dias
-                </label>
-                <input
-                  type="range"
-                  min="1"
-                  max="30"
-                  value={filters.dateRange}
-                  onChange={(e) =>
-                    onFilterChange({ dateRange: parseInt(e.target.value) })
-                  }
-                  className="w-full accent-cyan-500"
-                />
-              </div>
-            </div>
+        {/* Location */}
+        <Section icon={<MapPin className="w-3.5 h-3.5" />} label="Localização" defaultOpen={false}>
+          <div className="mt-1">
+            <select value={searchCity} onChange={e => setSearchCity(e.target.value)}>
+              <option value="">Todas as cidades</option>
+              {cities.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
           </div>
+        </Section>
 
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Search className="w-5 h-5 text-cyan-400" />
-              <h2 className="text-lg font-semibold">Localização</h2>
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                <label className="block text-sm font-medium mb-1 text-slate-300 flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
-                  Cidade
-                </label>
-                <select
-                  value={searchCity}
-                  onChange={(e) => setSearchCity(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-700 rounded-lg border border-slate-600 focus:border-cyan-500 focus:outline-none"
-                >
-                  <option value="">Selecione uma cidade</option>
-                  {brazilianCities.map((city) => (
-                    <option key={city} value={city}>
-                      {city}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1 text-slate-300">
-                  Estado
-                </label>
-                <select
-                  value={searchState}
-                  onChange={(e) => setSearchState(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-700 rounded-lg border border-slate-600 focus:border-cyan-500 focus:outline-none"
-                >
-                  <option value="">Todos os estados</option>
-                  {brazilianStates.map((state) => (
-                    <option key={state} value={state}>
-                      {state}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-
+        {/* Edu button */}
+        <div className="px-5 py-4 border-b border-[var(--border)]">
           <button
             onClick={onShowEducational}
-            className="w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-colors flex items-center justify-center gap-2"
+            className="w-full flex items-center justify-center gap-2 py-2.5 font-ui font-medium tracking-widest uppercase text-xs text-[var(--teal)] border border-[var(--border-hi)] hover:border-[var(--teal)] hover:bg-[rgba(0,232,208,0.05)] transition-all rounded-sm"
           >
-            <BookOpen className="w-4 h-4" />
-            Abrir Guia Educativo
+            <BookOpen className="w-3.5 h-3.5" />
+            Guia Educativo
           </button>
-
-          <button
-            onClick={() => setShowEducational(!showEducational)}
-            className="w-full px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
-          >
-            <BookOpen className="w-4 h-4" />
-            {showEducational ? 'Ocultar' : 'Ver'} Dicas Rápidas
-          </button>
-
-          {showEducational && (
-            <div className="p-4 bg-gradient-to-br from-blue-900/50 to-cyan-900/50 rounded-lg space-y-4 border border-blue-700/50">
-              <div>
-                <h3 className="font-semibold text-cyan-300 mb-2 flex items-center gap-2">
-                  🔬 O que é Metano (CH₄)?
-                </h3>
-                <p className="text-sm text-slate-300">
-                  Metano é um gás incolor e inodoro produzido pela decomposição de matéria orgânica. É um dos principais gases de efeito estufa, 25x mais potente que o CO₂.
-                </p>
-              </div>
-
-              <div>
-                <h3 className="font-semibold text-orange-300 mb-2 flex items-center gap-2">
-                  ⚠️ Impactos Ambientais
-                </h3>
-                <ul className="text-sm text-slate-300 space-y-1 list-disc list-inside">
-                  <li>Aquecimento global acelerado</li>
-                  <li>Poluição do ar urbano</li>
-                  <li>Contaminação do solo e água</li>
-                  <li>Degradação de ecossistemas</li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="font-semibold text-red-300 mb-2 flex items-center gap-2">
-                  🏥 Riscos à Saúde
-                </h3>
-                <ul className="text-sm text-slate-300 space-y-1 list-disc list-inside">
-                  <li>Problemas respiratórios</li>
-                  <li>Náuseas e tonturas</li>
-                  <li>Dores de cabeça</li>
-                  <li>Asfixia em altas concentrações</li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="font-semibold text-green-300 mb-2 flex items-center gap-2">
-                  ✅ Como Prevenir
-                </h3>
-                <ul className="text-sm text-slate-300 space-y-1 list-disc list-inside">
-                  <li>Gestão adequada de resíduos</li>
-                  <li>Coleta seletiva e reciclagem</li>
-                  <li>Compostagem de orgânicos</li>
-                  <li>Aterros sanitários modernos</li>
-                  <li>Captura de metano em aterros</li>
-                </ul>
-              </div>
-
-              <div className="pt-3 border-t border-blue-700/50">
-                <p className="text-xs text-slate-400 italic">
-                  Esta plataforma ajuda gestores públicos a identificar áreas críticas e tomar decisões baseadas em dados para melhorar a qualidade ambiental urbana.
-                </p>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
-      <div className="p-4 border-t border-slate-700 text-xs text-slate-400">
-        <p>
-          EYA — Plataforma governamental de monitoramento ambiental via satélite. Dados integráveis com NASA Earthdata, Copernicus e INPE.
+      {/* Footer */}
+      <div className="px-5 py-3 border-t border-[var(--border)]">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--teal)] animate-glow-pulse" />
+          <span className="font-data text-[9px] text-[var(--teal)] tracking-widest uppercase">Sistema online</span>
+        </div>
+        <p className="font-data text-[9px] text-[var(--text-3)] leading-relaxed">
+          NASA Earthdata · ESA Copernicus · INPE
         </p>
       </div>
     </div>
